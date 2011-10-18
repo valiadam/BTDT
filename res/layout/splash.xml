@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:background="@android:color/black" android:orientation="vertical">
+        <TextView android:textColor="@color/logo_color" android:textSize="@dimen/logo_size" android:layout_width="match_parent" android:text="@string/app_logo_top" android:layout_height="wrap_content" android:id="@+id/TextViewTopTitle" android:gravity="center_horizontal"></TextView>
+        <TableLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/TableLayout01" android:stretchColumns='"*"' android:gravity="center_horizontal">
+            <TableRow android:layout_width="wrap_content" android:id="@+id/tableRow1" android:layout_height="wrap_content" android:gravity="center_vertical|center_horizontal">
+                <ImageView android:src="@drawable/splash1" android:id="@+id/imageView1" android:layout_width="wrap_content" android:layout_height="wrap_content"></ImageView>
+                <ImageView android:src="@drawable/splash2" android:id="@+id/imageView2" android:layout_width="wrap_content" android:layout_height="wrap_content"></ImageView>
+            </TableRow>
+            <TableRow android:layout_width="wrap_content" android:id="@+id/tableRow2" android:layout_height="wrap_content" android:gravity="center_vertical|center_horizontal">
+                <ImageView android:src="@drawable/splash3" android:id="@+id/imageView3" android:layout_width="wrap_content" android:layout_height="wrap_content"></ImageView>
+                <ImageView android:src="@drawable/splash4" android:id="@+id/imageView4" android:layout_width="wrap_content" android:layout_height="wrap_content"></ImageView>
+            </TableRow>
+        </TableLayout>
+        <TextView android:id="@+id/TextViewBottomTitle" android:layout_height="wrap_content" android:layout_width="match_parent" android:text="@string/app_logo_bottom" android:textColor="@color/logo_color" android:textSize="@dimen/logo_size" android:gravity="center_horizontal"></TextView>
+        <TextView android:id="@+id/TextViewBottomVersion" android:layout_height="match_parent" android:layout_width="match_parent" android:text="@string/app_version_info" android:textColor="@color/version_color" android:background="@color/version_bkgrd" android:textSize="@dimen/version_size" android:lineSpacingExtra="@dimen/version_spacing" android:gravity="center_vertical|center_horizontal"></TextView>
+    </LinearLayout>
