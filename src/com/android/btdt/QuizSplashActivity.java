@@ -66,17 +66,10 @@ public class QuizSplashActivity extends QuizActivity {
         logo2.startAnimation(fade2);
 	}
 
-	private void startLogo1Animation() {
-		try{
-		TextView logo1 = (TextView) findViewById(R.id.TextViewTopTitle);
-		
+	private void startLogo1Animation() {		
+		TextView logo1 = (TextView) findViewById(R.id.TextViewTopTitle);		
         Animation fade1 = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-        logo1.startAnimation(fade1);
-		}catch (Exception ex)
-		{
-			int xx = 3;
-			
-		}
+        logo1.startAnimation(fade1);		
 	}
 
 	private void logStartup() {

@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" android:text="@string/help"/>
-</LinearLayout>
+<LinearLayout 	android:id="@+id/linearLayout1"
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				xmlns:android="http://schemas.android.com/apk/res/android"
+				android:background="@drawable/bkgrnd">
+        <RelativeLayout android:layout_width="wrap_content" 
+        				android:layout_height="wrap_content" 
+        				android:id="@+id/relativeLayout1" 
+        				android:layout_alignParentTop="true" 
+        				android:layout_centerHorizontal="true">
+            <ImageView  android:src="@drawable/quiz_icon" 
+            			android:id="@+id/imageView1" 
+            			android:layout_width="wrap_content" 
+            			android:layout_height="wrap_content" 
+            			android:layout_centerVertical="true"
+            			android:layout_alignParentLeft="true" 
+            			android:layout_alignParentTop="true"></ImageView>
+            <ImageView android:src="@drawable/quiz_icon" android:id="@+id/imageView2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:layout_alignParentLeft="false" android:layout_alignParentRight="true" android:layout_alignParentTop="true"></ImageView>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/textView1" android:layout_toRightOf="@+id/imageView1" android:text="@string/menu" android:textColor="@color/menu_color" android:textSize="@dimen/screen_title_size" android:layout_centerHorizontal="true" android:layout_centerVertical="false" android:layout_alignParentTop="true" android:shadowColor="@color/menu_glow" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="5"></TextView>
+        </RelativeLayout>
+        <TextView android:text="TextView" android:id="@+id/TextView_HelpText" android:layout_height="match_parent" android:layout_width="match_parent" android:textStyle="italic" android:isScrollContainer="true" android:scrollbars="vertical" android:fadingEdgeLength="@dimen/help_text_fading" android:scrollbarStyle="outsideOverlay"></TextView>
+        
+   </LinearLayout>
