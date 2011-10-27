@@ -20,5 +20,20 @@
 	<string name="rank">"Ranking"</string>
 	<string name="score">"Score"</string>
 	<string name="wait_msg">"Retrieving Scores..."</string>
-	<string name="wait_title">"Loading..."</string>	
+	<string name="wait_title">"Loading..."</string>
+	<string name="nickname">"Nickname:"</string>
+	<string name="password_label">"Password"</string>
+	<string name="password_again_label">"Password (again)"</string>
+	<string name="set_password">"Set Password"</string>
+	<string name="password_set">"Password Set"</string>
+	<string name="password_not_set">"Password Not Set"</string>
+	<string name="date_of_birth">"Date of birth"</string>
+	<string name="set_date_of_birth">"Set date of birth"</string>
+	<string name="date_of_birth_not_set">"Date of birth not set"</string>
+	<string name="passwords_match">"The passwords match"</string>
+	<string name="passwords_dont_match">"The passwords do not match"</string>
+	<string name="gender">"Gender"</string>
+	<string name="gender_male">"Male"</string>
+	<string name="gender_female">"Female"</string>
+	<string name="gender_unknown">"Prefer not to say"</string>	
 </resources>

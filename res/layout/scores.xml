@@ -3,8 +3,55 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" android:text="@string/scores"/>
+    android:background="@drawable/bkgrnd">
+    
+	<RelativeLayout android:layout_width="wrap_content" 
+        				android:layout_height="wrap_content" 
+        				android:id="@+id/relativeLayout1" 
+        				android:layout_alignParentTop="true" 
+        				android:layout_centerHorizontal="true">
+        				
+            <ImageView  android:src="@drawable/quiz_icon" 
+            			android:id="@+id/imageView1" 
+            			android:layout_width="wrap_content" 
+            			android:layout_height="wrap_content" 
+            			android:layout_centerVertical="true"
+            			android:layout_alignParentLeft="true" 
+            			android:layout_alignParentTop="true"></ImageView>
+            			
+            <ImageView android:src="@drawable/quiz_icon"
+            			android:id="@+id/imageView2" 
+            			android:layout_width="wrap_content" 
+            			android:layout_height="wrap_content" 
+            			android:layout_centerVertical="true" 
+            			android:layout_alignParentLeft="false" 
+            			android:layout_alignParentRight="true" 
+            			android:layout_alignParentTop="true"></ImageView>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/textView1" android:layout_toRightOf="@+id/imageView1" android:text="@string/scores" android:textColor="@color/menu_color" android:textSize="@dimen/screen_title_size" android:layout_centerHorizontal="true" android:layout_centerVertical="false" android:layout_alignParentTop="true" android:shadowColor="@color/menu_glow" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="5"></TextView>
+        </RelativeLayout>
+	<TabHost android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/TabHost1">
+		<LinearLayout android:layout_width="match_parent" android:id="@+id/linearLayout1" android:layout_height="match_parent" android:orientation="vertical">
+			<TabWidget android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@android:id/tabs"></TabWidget>
+			<FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:id="@android:id/tabcontent">
+				<ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/ScrollViewAllScores" android:scrollbars="vertical">
+					<TableLayout android:layout_height="match_parent" android:stretchColumns='"*"' android:id="@+id/TableLayout_AllScores" android:layout_width="match_parent">
+						<TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow2" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow3" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow4" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+					</TableLayout>
+				</ScrollView>
+				<ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/ScrollViewFriendScores" android:scrollbars="vertical">
+					<TableLayout android:layout_height="match_parent" android:stretchColumns='"*"' android:id="@+id/TableLayout_FriendScores" android:layout_width="match_parent">
+						<TableRow android:id="@+id/tableRow5" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow6" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow7" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+						<TableRow android:id="@+id/tableRow8" android:layout_height="wrap_content" android:layout_width="wrap_content"></TableRow>
+					</TableLayout>
+				</ScrollView>
+			</FrameLayout>
+		</LinearLayout>
+	</TabHost>
+        
+        
 </LinearLayout>

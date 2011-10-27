@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" android:text="@string/game"/>
-</LinearLayout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/bkgrnd" android:layout_height="match_parent" android:layout_width="match_parent">
+    <LinearLayout android:orientation="vertical" android:id="@+id/linearLayout1" android:layout_height="wrap_content" android:layout_width="wrap_content" android:gravity="center" android:weightSum="100" android:layout_above="@+id/Button_Yes">
+        <ImageSwitcher android:id="@+id/ImageSwitcher_QuestionImage" android:layout_height="@dimen/game_image_size" android:layout_width="@dimen/game_image_size" android:clipChildren="false" android:layout_weight="75" android:outAnimation="@android:anim/fade_out" android:inAnimation="@android:anim/fade_in"></ImageSwitcher>
+        <TextSwitcher android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/TextSwitcher_QuestionText" android:inAnimation="@android:anim/fade_in" android:outAnimation="@android:anim/fade_out" android:layout_weight="25"></TextSwitcher>
+    </LinearLayout>
+    <Button android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/Button_Yes"
+			android:layout_alignParentBottom="true"
+			android:layout_alignParentRight="true"
+			android:text="@android:string/yes"
+			android:textSize="@dimen/menu_item_size"
+			android:minWidth="@dimen/game_button_size" android:onClick="onYesButton"></Button>
+	<Button android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/Button_No"
+			android:layout_alignParentBottom="true"
+			android:layout_alignParentLeft="true"
+			android:text="@android:string/no"
+			android:textSize="@dimen/menu_item_size"
+			android:minWidth="@dimen/game_button_size" android:onClick="onNoButton"></Button>
+</RelativeLayout>

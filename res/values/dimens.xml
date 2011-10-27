@@ -9,4 +9,8 @@
 	<dimen name="help_text_size">7pt</dimen>
 	<dimen name="help_text_fading">25dp</dimen>
 	<dimen name="help_text_drawable_padding">5dp</dimen>
+	<dimen name="game_button_size">75dp</dimen>
+	<dimen name="game_padding">45dp</dimen>
+	<dimen name="game_image_size">225dp</dimen>
+	<dimen name="game_question_size">22dp</dimen>
 </resources>

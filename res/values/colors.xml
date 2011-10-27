@@ -7,4 +7,5 @@
 	<color name="title_glow">#F00</color>
 	<color name="menu_color">#FFFF0F</color>
 	<color name="menu_glow">#F00</color>
+	<color name="error_color">#F00</color>
 </resources>
