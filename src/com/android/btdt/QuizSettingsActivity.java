@@ -83,7 +83,13 @@ public class QuizSettingsActivity extends QuizActivity {
         else
         	passwordInfo.setText(R.string.password_not_set);
         
+        updateCurrentScoreLabel();
     }
+
+	private void updateCurrentScoreLabel() {
+		final TextView currentScore = (TextView) findViewById(R.id.textViewCurrentScoreValue);
+        currentScore.setText(Integer.toString(mGameSettings.getInt(GAME_PREFERENCES_SCORE, 0)));
+	}
     
     @Override
 	protected void onPause() {
@@ -254,5 +260,14 @@ public class QuizSettingsActivity extends QuizActivity {
 			dateDialog.updateDate(iYear, iMonth, iDay);
 			return;
 		}
-	}    
+	}
+	
+	public void onResetScoreButtonClick(View view)
+	{
+		Editor editor = mGameSettings.edit();
+		editor.remove(GAME_PREFERENCES_CURRENT_QUESTION);
+		editor.remove(GAME_PREFERENCES_SCORE);
+		editor.commit();
+		updateCurrentScoreLabel();
+	}
 }
