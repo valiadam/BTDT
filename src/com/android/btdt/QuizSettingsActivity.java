@@ -1,26 +1,38 @@
 package com.android.btdt;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Calendar;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,6 +40,9 @@ import android.widget.Toast;
 public class QuizSettingsActivity extends QuizActivity {
 	static final int DATE_DIALOG_ID = 0;
 	static final int PASSWORD_DIALOG_ID = 1;
+	
+	static final int TAKE_AVATAR_CAMERA_REQUEST = 1;
+	static final int TAKE_AVATAR_GALLERY_REQUEST = 2;
 	
 	SharedPreferences mGameSettings;
     /** Called when the activity is first created. */
@@ -78,12 +93,35 @@ public class QuizSettingsActivity extends QuizActivity {
 		}
         
         final TextView passwordInfo = (TextView) findViewById(R.id.textView_PasswordState);
-        if (mGameSettings.contains(GAME_PREFERENCES_PASSWORD))        
+        if (mGameSettings.contains(GAME_PREFERENCES_PASSWORD))
 			passwordInfo.setText(R.string.password_set);
         else
         	passwordInfo.setText(R.string.password_not_set);
         
         updateCurrentScoreLabel();
+        
+        ImageButton avatarButton = (ImageButton)findViewById(R.id.imageButton_avatar);
+        if (mGameSettings.contains(GAME_PREFERENCES_AVATAR)) {
+			String strAvatarUri = mGameSettings
+					.getString(GAME_PREFERENCES_AVATAR,
+							"android.resource://com.androidbook.peakbagger/drawable/avatar");
+			Uri imageUri = Uri.parse(strAvatarUri);
+			avatarButton.setImageURI(imageUri);
+		} else {
+			avatarButton.setImageResource(R.drawable.avatar);
+		}
+        
+        avatarButton.setOnLongClickListener(
+        		new View.OnLongClickListener() {
+					
+					@Override
+					public boolean onLongClick(View v) {
+						Intent pickPhoto = new Intent(Intent.ACTION_PICK);
+						pickPhoto.setType("image/*");
+						startActivityForResult(pickPhoto, TAKE_AVATAR_GALLERY_REQUEST);
+						return true;
+					}
+				});
     }
 
 	private void updateCurrentScoreLabel() {
@@ -269,5 +307,81 @@ public class QuizSettingsActivity extends QuizActivity {
 		editor.remove(GAME_PREFERENCES_SCORE);
 		editor.commit();
 		updateCurrentScoreLabel();
+	}
+	
+	public void onLaunchCamera(View v){
+		Intent pictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+		startActivityForResult(pictureIntent, TAKE_AVATAR_CAMERA_REQUEST);
+	}
+	
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch(requestCode){
+		case TAKE_AVATAR_CAMERA_REQUEST:
+			if (resultCode == Activity.RESULT_CANCELED){
+			}
+			else if (resultCode == Activity.RESULT_OK){
+				Bitmap cameraPic = (Bitmap) data.getExtras().get("data");
+				saveAvatar(cameraPic);
+			}
+			break;
+		case TAKE_AVATAR_GALLERY_REQUEST:
+			if (resultCode == Activity.RESULT_CANCELED){
+			}
+			else if (resultCode == Activity.RESULT_OK){
+				Uri photoUri = data.getData();
+				
+				try {
+					Bitmap galleryPic = MediaStore.Images.Media.getBitmap(getContentResolver(), photoUri);
+					saveAvatar(galleryPic);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			break;
+		}
+	}
+	
+	private void saveAvatar(Bitmap avatar){
+		ImageButton imageButtonAvatar = (ImageButton) findViewById(R.id.imageButton_avatar);
+		
+		Resources res = getResources();
+		int dips = (int) res.getDimension(R.dimen.avatar_size);
+		int maxSide = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dips,res.getDisplayMetrics());
+		Bitmap scaledAvatar = createScaledBitmapKeepingAspectRatio(avatar, maxSide);
+		
+		String strAvatarFileName = "avatar.jpg";
+		try {
+			scaledAvatar.compress(CompressFormat.JPEG, 100, openFileOutput(strAvatarFileName, MODE_PRIVATE));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Uri imageUriToSaveCameraImageTo = Uri.fromFile(new File(
+				QuizSettingsActivity.this.getFilesDir(), strAvatarFileName));
+
+		Editor editor = mGameSettings.edit();
+		editor.putString(GAME_PREFERENCES_AVATAR,
+				imageUriToSaveCameraImageTo.getPath());
+		editor.commit();
+		
+		imageButtonAvatar.setImageBitmap(scaledAvatar);
+	}
+	
+	private Bitmap createScaledBitmapKeepingAspectRatio(Bitmap bitmap, int maxSide){
+		int orgHeight = bitmap.getHeight();
+		int orgWidth = bitmap.getWidth();
+		
+		int scaledHeight = (orgHeight >= orgWidth ? maxSide 
+				: (int)((float)maxSide * ((float)orgHeight/(float)orgWidth)));
+		
+		int scaledWidth = (orgWidth >= orgHeight ? maxSide 
+				: (int)((float)maxSide * ((float)orgWidth/(float)orgHeight)));
+		
+		Bitmap scaledGalleryPic = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true);
+		return scaledGalleryPic;
 	}
 }
