@@ -41,4 +41,11 @@
     <string name="no">No</string>
     <string name="reset_score">Reset score</string>
     <string name="current_score">Current score:</string>
+    <string name="favorite_place">Favorite place:</string>
+    <string name="pick_a_place">Pick a place</string>
+    <string name="no_favorit_place_set">No favorite place set</string>
+    <string name="coordinates">Coordinates</string>
+    <string name="current_location">Current location</string>
+    <string name="map_it">Map It!</string>
+    
 </resources>

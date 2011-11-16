@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent" android:id="@+id/root" android:background="@drawable/bkgrnd">
+    <TextView 
+    	android:id="@+id/TextView_FavPlace"
+    	android:layout_height="wrap_content" 
+    	android:layout_width="wrap_content" 
+    	android:text="@string/favorite_place"
+    	android:textSize="@dimen/help_text_size"
+        android:textStyle="bold"></TextView>
+    <RelativeLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/relativeLayout1">
+        <EditText android:id="@+id/EditText_FavPlaceName" android:layout_height="wrap_content" android:layout_width="wrap_content" android:maxLines="1" android:inputType="text" android:width="@dimen/fav_place_textbox_size" android:layout_alignParentLeft="true" android:text="@string/current_location">
+            <requestFocus></requestFocus>
+        </EditText>
+        <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_toRightOf="@+id/editText1" android:id="@+id/Button_MapIt" android:text="@string/map_it" android:layout_alignParentRight="true" android:layout_alignRight="@+id/EditText_FavPlaceName"></Button>
+    </RelativeLayout>
+    <TextView 
+    	android:text="@string/coordinates" 
+	    android:id="@+id/textView2" 
+	    android:layout_height="wrap_content" 
+	    android:layout_width="wrap_content"
+	    android:textSize="@dimen/help_text_size"
+	    android:textStyle="bold"></TextView>
+    <TextView 
+    	android:text="TextView" 
+    	android:id="@+id/TextView_FavPlaceCoords_Info" 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content"
+    	android:textSize="@dimen/help_text_size"
+        android:textStyle="bold"></TextView>
+    
+</LinearLayout>

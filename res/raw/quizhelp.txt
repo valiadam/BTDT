@@ -1,0 +1,12 @@
+This is the help file for Been There Done That.
+
+Been There Done That is a fun trivia game in which you have to say whether you've been to a place or done something.
+
+This file should contain several paragraphs, so I'm just continuing to write random stuff. Today I went to the bank for example. I hope this is enough text. I wonder what will happen next.
+
+Phone: 1-800-555-1212
+Email: support@mamlambo.com
+Website: http://www.mamlambo.com 
+Address: 1060 West Addison Street, Chicago, IL 60613 (Pardon the Blues Brothers reference)
+COPYRIGHT (c) 2011, Mamlambo. 
+All rights reserved.

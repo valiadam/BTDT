@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a mock score XML chunk -->
+<scores>
+	<score
+		username="LED"
+		score="12345"
+		rank="1" />
+	<score
+		username="SAC"
+		score="12344"
+		rank="2" />
+	<score
+		username="NAD"
+		score="12339"
+		rank="3" />
+</scores>

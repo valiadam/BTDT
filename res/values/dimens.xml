@@ -14,4 +14,5 @@
 	<dimen name="game_image_size">225dp</dimen>
 	<dimen name="game_question_size">22dp</dimen>
 	<dimen name="avatar_size">75dp</dimen>
+	<dimen name="fav_place_textbox_size">200dp</dimen>
 </resources>

@@ -51,6 +51,11 @@
     			</LinearLayout>
     			<TextView android:layout_width="wrap_content" android:id="@+id/textView6" android:text="@string/gender" android:layout_height="wrap_content"></TextView>
     			<Spinner android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/Spinner_Gender" android:entries="@array/genders"></Spinner>
+    			<TextView android:id="@+id/TextView_FavoritePlace" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/favorite_place"></TextView>
+    			<LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/linearLayout7">
+    				<Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/Button_FavoritePlace" android:text="@string/pick_a_place" android:onClick="onPickPlaceButtonClick"></Button>
+    				<TextView android:text="TextView" android:id="@+id/TextView_FavoritePlace_Info" android:layout_height="match_parent" android:layout_width="match_parent" android:textStyle="bold" android:gravity="center" android:textSize="@dimen/help_text_size"></TextView>
+    			</LinearLayout>
     			<TextView android:text="@string/score" android:layout_width="wrap_content" android:id="@+id/textView7" android:layout_height="wrap_content"></TextView>
     			<LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/linearLayout4">
     				<Button android:onClick="onResetScoreButtonClick" android:layout_height="wrap_content" android:id="@+id/buttonResetScore" android:text="@string/reset_score" android:layout_width="wrap_content"></Button>

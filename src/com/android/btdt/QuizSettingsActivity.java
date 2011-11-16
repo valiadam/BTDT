@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,6 +20,10 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -26,10 +33,12 @@ import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -40,11 +49,13 @@ import android.widget.Toast;
 public class QuizSettingsActivity extends QuizActivity {
 	static final int DATE_DIALOG_ID = 0;
 	static final int PASSWORD_DIALOG_ID = 1;
+	static final int PLACE_DIALOG_ID = 2;
 	
 	static final int TAKE_AVATAR_CAMERA_REQUEST = 1;
 	static final int TAKE_AVATAR_GALLERY_REQUEST = 2;
 	
 	SharedPreferences mGameSettings;
+	GPSCoords mFavLoc;
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,54 +64,33 @@ public class QuizSettingsActivity extends QuizActivity {
         
         mGameSettings = getSharedPreferences(GAME_PREFERENCES, Context.MODE_PRIVATE);
         
-        if (mGameSettings.contains(GAME_PREFERENCES_NICKNAME)){
-        	final EditText nicknameText = (EditText) findViewById(R.id.EditText_Nickname);
-        	nicknameText.setText(mGameSettings.getString(GAME_PREFERENCES_NICKNAME, ""));
-        }
+        initNicknameEdit();
         
-        if (mGameSettings.contains(GAME_PREFERENCES_EMAIL)){
-        	final EditText emailText = (EditText) findViewById(R.id.EditText_Email);
-        	emailText.setText(mGameSettings.getString(GAME_PREFERENCES_EMAIL, ""));
-        }
+        initEmailEdit();
         
-        Spinner spinner = (Spinner) findViewById(R.id.Spinner_Gender);
+        initGenderEdit();
         
-        //first set the initial value, so we won't fire the OnItemSelected event
-        if (mGameSettings.contains(GAME_PREFERENCES_GENDER)){
-        	int gender = mGameSettings.getInt(GAME_PREFERENCES_GENDER, 0);
-        	spinner.setSelection(gender);
-        }
-        spinner.setOnItemSelectedListener(
-        		new AdapterView.OnItemSelectedListener() {
-        		public void onItemSelected(AdapterView<?> parent, View itemSelected,
-        		int selectedItemPosition, long selectedId) {
-        		Editor editor = mGameSettings.edit();
-        		editor.putInt(GAME_PREFERENCES_GENDER, selectedItemPosition);
-        		editor.commit();
-        		}
-
-				@Override
-				public void onNothingSelected(AdapterView<?> arg0) {
-					// TODO Auto-generated method stub					
-				}
-        		});
+        initDOBText();
         
-        if (mGameSettings.contains(GAME_PREFERENCES_DOB))
-		{
-			long msBirthDate = mGameSettings.getLong(GAME_PREFERENCES_DOB, 0);
-			final TextView textDOB = (TextView) findViewById(R.id.textView_DOBState);
-			textDOB.setText(DateFormat.format("MMMM dd yyyy", msBirthDate));
-		}
-        
-        final TextView passwordInfo = (TextView) findViewById(R.id.textView_PasswordState);
-        if (mGameSettings.contains(GAME_PREFERENCES_PASSWORD))
-			passwordInfo.setText(R.string.password_set);
-        else
-        	passwordInfo.setText(R.string.password_not_set);
+        initPasswordInfoText();
         
         updateCurrentScoreLabel();
         
-        ImageButton avatarButton = (ImageButton)findViewById(R.id.imageButton_avatar);
+        initAvatarImageButton();
+        
+        initFavLoc();
+        
+        initFavoritePlacePicker();
+    }
+
+	private void initFavLoc() {
+		mFavLoc = new GPSCoords(mGameSettings.getFloat(GAME_PREFERENCES_LONGITUDE, 0), 
+        						mGameSettings.getFloat(GAME_PREFERENCES_LATITUDE, 0),
+        						mGameSettings.getString(GAME_PREFERENCES_LOCATION_NAME, ""));
+	}
+
+	private void initAvatarImageButton() {
+		ImageButton avatarButton = (ImageButton)findViewById(R.id.imageButton_avatar);
         if (mGameSettings.contains(GAME_PREFERENCES_AVATAR)) {
 			String strAvatarUri = mGameSettings
 					.getString(GAME_PREFERENCES_AVATAR,
@@ -122,7 +112,62 @@ public class QuizSettingsActivity extends QuizActivity {
 						return true;
 					}
 				});
-    }
+	}
+
+	private void initPasswordInfoText() {
+		final TextView passwordInfo = (TextView) findViewById(R.id.textView_PasswordState);
+        if (mGameSettings.contains(GAME_PREFERENCES_PASSWORD))
+			passwordInfo.setText(R.string.password_set);
+        else
+        	passwordInfo.setText(R.string.password_not_set);
+	}
+
+	private void initDOBText() {
+		if (mGameSettings.contains(GAME_PREFERENCES_DOB))
+		{
+			long msBirthDate = mGameSettings.getLong(GAME_PREFERENCES_DOB, 0);
+			final TextView textDOB = (TextView) findViewById(R.id.textView_DOBState);
+			textDOB.setText(DateFormat.format("MMMM dd yyyy", msBirthDate));
+		}
+	}
+
+	private void initGenderEdit() {
+		Spinner spinner = (Spinner) findViewById(R.id.Spinner_Gender);
+        
+        //first set the initial value, so we won't fire the OnItemSelected event
+        if (mGameSettings.contains(GAME_PREFERENCES_GENDER)){
+        	int gender = mGameSettings.getInt(GAME_PREFERENCES_GENDER, 0);
+        	spinner.setSelection(gender);
+        }
+        spinner.setOnItemSelectedListener(
+        		new AdapterView.OnItemSelectedListener() {
+        		public void onItemSelected(AdapterView<?> parent, View itemSelected,
+        		int selectedItemPosition, long selectedId) {
+        		Editor editor = mGameSettings.edit();
+        		editor.putInt(GAME_PREFERENCES_GENDER, selectedItemPosition);
+        		editor.commit();
+        		}
+
+				@Override
+				public void onNothingSelected(AdapterView<?> arg0) {
+					// TODO Auto-generated method stub					
+				}
+        		});
+	}
+
+	private void initEmailEdit() {
+		if (mGameSettings.contains(GAME_PREFERENCES_EMAIL)){
+        	final EditText emailText = (EditText) findViewById(R.id.EditText_Email);
+        	emailText.setText(mGameSettings.getString(GAME_PREFERENCES_EMAIL, ""));
+        }
+	}
+
+	private void initNicknameEdit() {
+		if (mGameSettings.contains(GAME_PREFERENCES_NICKNAME)){
+        	final EditText nicknameText = (EditText) findViewById(R.id.EditText_Nickname);
+        	nicknameText.setText(mGameSettings.getString(GAME_PREFERENCES_NICKNAME, ""));
+        }
+	}
 
 	private void updateCurrentScoreLabel() {
 		final TextView currentScore = (TextView) findViewById(R.id.textViewCurrentScoreValue);
@@ -196,6 +241,7 @@ public class QuizSettingsActivity extends QuizActivity {
 					now.get(Calendar.DAY_OF_MONTH));
 			return dateDialog;
 		case PASSWORD_DIALOG_ID:
+		{
 			LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			final View layout = inflater.inflate(R.layout.password_dialog,
 												(ViewGroup)findViewById(R.id.root));
@@ -268,9 +314,145 @@ public class QuizSettingsActivity extends QuizActivity {
 			
 			AlertDialog passwordDialog = builder.create();
 			return passwordDialog;
+		}
+		case PLACE_DIALOG_ID:
+			LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			final View layout = inflater.inflate(R.layout.fav_place_dialog,
+					(ViewGroup)findViewById(R.id.root));
 			
+			final TextView placeCoordinates = (TextView) layout.findViewById(R.id.TextView_FavPlaceCoords_Info);
+			final EditText placeName = (EditText) layout.findViewById(R.id.EditText_FavPlaceName);
+			placeName.setOnKeyListener(new View.OnKeyListener() {
+				
+				@Override
+				public boolean onKey(View v, int keyCode, KeyEvent event) {
+					if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+
+                        String strPlaceName = placeName.getText().toString();
+                        if ((strPlaceName != null) && (strPlaceName.length() > 0)) {
+                            // Try to resolve string into GPS coords
+                        	mFavLoc.name = strPlaceName;
+        					fixCoordinatesFromLocationName();        					
+        					saveFavoriteLocation();
+
+                            placeCoordinates.setText(formatCoordinates(mFavLoc.latitude, mFavLoc.longitude));
+                            return true;
+                        }
+                    }
+					return false;
+				}
+			});
+			final Button mapButton = (Button)layout.findViewById(R.id.Button_MapIt);
+			mapButton.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					mFavLoc.name = placeName.getText().toString();
+					fixCoordinatesFromLocationName();
+					
+					saveFavoriteLocation();
+					placeCoordinates.setText(formatCoordinates(mFavLoc.latitude, mFavLoc.longitude));
+					
+					  // Launch map with gps coords
+                    String geoURI = String.format(Locale.US, "geo:%f,%f?z=10", mFavLoc.latitude, mFavLoc.longitude);
+                    Uri geo = Uri.parse(geoURI);
+                    Intent geoMap = new Intent(Intent.ACTION_VIEW, geo);
+                    startActivity(geoMap);
+				}
+			});
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setView(layout);
+			builder.setTitle(R.string.favorite_place);
+			builder.setPositiveButton(android.R.string.ok, 
+					new DialogInterface.OnClickListener() {
+						
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							QuizSettingsActivity.this.removeDialog(PLACE_DIALOG_ID);					
+						}
+					});
+			builder.setNegativeButton(android.R.string.cancel, 
+					new DialogInterface.OnClickListener() {
+						
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							QuizSettingsActivity.this.removeDialog(PLACE_DIALOG_ID);					
+						}
+					});
+			AlertDialog favLocationDialog = builder.create();
+			return favLocationDialog;
 		}
 		return null;
+	}
+	
+	class GPSCoords{
+		float longitude;
+		float latitude;
+		String name;
+		
+		public GPSCoords(float longitude, float latitude, String name){
+			this.longitude = longitude;
+			this.latitude = latitude;
+			this.name = name;
+		}
+	}
+
+	private boolean fixCoordinatesFromLocationName() {
+		final Geocoder coder = new Geocoder(getApplicationContext());
+        boolean bResolvedAddress = false;
+
+        try {
+            List<Address> geocodeResults = coder.getFromLocationName(mFavLoc.name,1);
+            Iterator<Address> locations = geocodeResults.iterator();
+
+            while (locations.hasNext()) {
+                Address loc = locations.next();
+                mFavLoc.latitude = (float) loc.getLatitude();
+                mFavLoc.longitude = (float) loc.getLongitude();
+                bResolvedAddress = true;
+            }
+        } catch (Exception e) {
+            Log.e(DEBUG_TAG, "Failed to geocode location from coordinates", e);
+        }
+        return bResolvedAddress;
+	}
+	
+	private boolean getLastLocation(){
+		boolean bResolvedCoordinates = false;
+		try {
+            LocationManager locMgr = (LocationManager) getSystemService(LOCATION_SERVICE);
+            Location recentLoc = locMgr.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            mFavLoc.latitude = (float) recentLoc.getLatitude();
+            mFavLoc.longitude = (float) recentLoc.getLongitude();
+            mFavLoc.name = getApplicationContext().getString(R.string.current_location);
+            bResolvedCoordinates = fixLocationNameFromCoordinates();
+        } catch (Exception e) {
+            Log.e(DEBUG_TAG, "Failed to get coordinates from location name failed", e);
+        }
+        return bResolvedCoordinates;
+	}
+
+	private boolean fixLocationNameFromCoordinates() {		 
+		final Geocoder coder = new Geocoder(getApplicationContext());
+        boolean bResolvedAddress = false;
+
+        try {
+            List<Address> geocodeResults = coder.getFromLocation(mFavLoc.latitude, mFavLoc.longitude, 1);
+            Iterator<Address> locations = geocodeResults.iterator();
+
+            while (locations.hasNext()) {
+                Address loc = locations.next();
+                String featureName = loc.getFeatureName();
+                mFavLoc.name = (featureName != null ? 
+        								featureName : 
+        								formatCoordinates(mFavLoc.latitude, mFavLoc.longitude));
+                bResolvedAddress = true;
+            }
+        } catch (Exception e) {
+            Log.e(DEBUG_TAG, "Failed to geocode location from coordinates", e);
+        }
+        return bResolvedAddress;
 	}
 
 	@Override
@@ -297,9 +479,39 @@ public class QuizSettingsActivity extends QuizActivity {
 			
 			dateDialog.updateDate(iYear, iMonth, iDay);
 			return;
+		case PLACE_DIALOG_ID:
+			AlertDialog placeDialog = (AlertDialog) dialog;
+			
+			final EditText editTextPlaceName = (EditText) placeDialog.findViewById(R.id.EditText_FavPlaceName);
+			final TextView textViewCoordinates = (TextView) placeDialog.findViewById(R.id.TextView_FavPlaceCoords_Info);
+			
+			boolean bHasLocationName = mGameSettings.contains(GAME_PREFERENCES_LOCATION_NAME);
+			boolean bHasCoordinates = mGameSettings.contains(GAME_PREFERENCES_LATITUDE)
+								&& mGameSettings.contains(GAME_PREFERENCES_LONGITUDE);
+			
+			if (!bHasLocationName && bHasCoordinates)
+				bHasLocationName = fixLocationNameFromCoordinates();
+			else if (bHasLocationName && !bHasCoordinates)
+				bHasCoordinates = fixCoordinatesFromLocationName();
+			else if (!bHasLocationName && !bHasCoordinates)
+				bHasCoordinates = bHasLocationName = getLastLocation();
+			
+			editTextPlaceName.setText(mFavLoc.name);
+			String strCoordinates = formatCoordinates(mFavLoc.latitude, mFavLoc.longitude);
+			textViewCoordinates.setText(strCoordinates);
+		
+			return;
 		}
 	}
 	
+	private String formatCoordinates(float latitude, float longitude) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(latitude);
+		builder.append(", ");
+		builder.append(longitude);
+		return builder.toString();
+	}
+
 	public void onResetScoreButtonClick(View view)
 	{
 		Editor editor = mGameSettings.edit();
@@ -383,5 +595,25 @@ public class QuizSettingsActivity extends QuizActivity {
 		
 		Bitmap scaledGalleryPic = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true);
 		return scaledGalleryPic;
+	}
+	
+	private void initFavoritePlacePicker(){
+		TextView textViewFavoritePlace = (TextView) findViewById(R.id.TextView_FavoritePlace_Info);
+		if (mGameSettings.contains(GAME_PREFERENCES_LOCATION_NAME))
+			textViewFavoritePlace.setText(mGameSettings.getString(GAME_PREFERENCES_LOCATION_NAME, ""));
+		else
+			textViewFavoritePlace.setText(R.string.no_favorit_place_set);
+	}
+	
+	public void onPickPlaceButtonClick(View view) {
+		showDialog(PLACE_DIALOG_ID);
+	}
+
+	private void saveFavoriteLocation() {
+		Editor editor = mGameSettings.edit();
+		editor.putFloat(GAME_PREFERENCES_LATITUDE, mFavLoc.latitude);
+		editor.putFloat(GAME_PREFERENCES_LONGITUDE, mFavLoc.longitude);
+		editor.putString(GAME_PREFERENCES_LOCATION_NAME, mFavLoc.name);
+		editor.commit();
 	}
 }
