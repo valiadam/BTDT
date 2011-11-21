@@ -5,9 +5,14 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Hashtable;
 
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -17,6 +22,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,6 +40,7 @@ public class QuizGameActivity extends QuizActivity {
 	private ImageSwitcher mQuestionImage;
 	SharedPreferences mGameSettings;
 	Hashtable<Integer, Question> mQuestions;
+	QuizTask downloader;
 		
 	public class MyImageSwitcherFactory implements ViewFactory {
 
@@ -81,24 +88,22 @@ public class QuizGameActivity extends QuizActivity {
         TextView scoreTextView = (TextView) findViewById(R.id.textViewScore);
         scoreTextView.setText(Integer.toString(curScore));
         
-        try{
-        	loadQuestionBatch(curQuestionNumber);
-        } catch(Exception e){
-        	Log.e(DEBUG_TAG, "Loading initial question batch failed", e);
-        }
-        
-        if (mQuestions.containsKey(curQuestionNumber))
-        {
-        	mQuestionText.setText(getQuestionText(curQuestionNumber));
-        	mQuestionImage.setImageDrawable(getQuestionImageDrawable(curQuestionNumber));
-        }
-        else
-        {
-        	handleNoQuestions();
-        }
+        downloader = new QuizTask();
+        downloader.execute(TRIVIA_SERVER_QUESTIONS, curQuestionNumber);
     }
     
-    public void onNoButton(View v) {
+    @Override
+	protected void onPause() {
+    	if (downloader != null && downloader.getStatus() != AsyncTask.Status.FINISHED){
+    		Log.d(DEBUG_TAG, "downloader.cancel");
+    		pleaseWaitDialog.dismiss();
+    		downloader.cancel(true);
+    	}
+    	
+    	super.onPause();
+	}
+
+	public void onNoButton(View v) {
     	handleAnswerAndShowNextQuestion(false);
     	}
     
@@ -119,15 +124,15 @@ public class QuizGameActivity extends QuizActivity {
     	edit.commit();
     	
     	if (mQuestions.containsKey(nextQuestionNumber)== false){
-    		try{
-    			loadQuestionBatch(nextQuestionNumber);
-    		}catch(Exception e)
-    		{
-    			Log.e(DEBUG_TAG, "Loading updated question batch failed", e);
-    		}
+            downloader = new QuizTask();
+            downloader.execute(TRIVIA_SERVER_QUESTIONS, nextQuestionNumber);
     	}
-    	
-    	if (mQuestions.containsKey(nextQuestionNumber))
+    	else
+    		displayCurrentQuestion(nextQuestionNumber);
+	}
+
+	private void displayCurrentQuestion(int nextQuestionNumber) {
+		if (mQuestions.containsKey(nextQuestionNumber))
     	{
     		TextSwitcher textSwitcher = (TextSwitcher) findViewById(R.id.TextSwitcher_QuestionText);
     		textSwitcher.setText(getQuestionText(nextQuestionNumber));
@@ -236,36 +241,96 @@ public class QuizGameActivity extends QuizActivity {
 		}
 	}
 	
-	private void loadQuestionBatch(int startQuestionNumber) throws XmlPullParserException, IOException
-	{
-		mQuestions.clear();
-		
-		XmlResourceParser questionBatch;
-		
-		//BEGIN MOCK QUESTIONS
-		int xmlId = (startQuestionNumber < 16 ? R.xml.samplequestions : R.xml.samplequestions2);		
-		questionBatch = getResources().getXml(xmlId);
-		//END MOCK QUESTIONS
-		
-		//parse the XML
-		int eventType = -1;
-		
-		while (eventType != XmlResourceParser.END_DOCUMENT){
-			if (eventType == XmlResourceParser.START_TAG){
-				//get the name of the tag
-				String tagName = questionBatch.getName();
-				
-				if (tagName.equals(XML_TAG_QUESTION))
-				{
-					String strQuestionNumber = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_NUMBER);
-					Integer questionNum = new Integer(strQuestionNumber);
-					String questionText = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_TEXT);
-					String questionImageUrl = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_IMAGEURL);
-					
-					mQuestions.put(questionNum, new Question(questionNum, questionText, questionImageUrl));
-				}
+	ProgressDialog pleaseWaitDialog;
+
+	class QuizTask extends AsyncTask<Object, Object, Boolean>{
+		private static final String DEBUG_TAG = "QuizGameActivity$QuizTask";
+		int startingQuestionNumber;
+
+		@Override
+		protected void onCancelled() {
+			Log.i(DEBUG_TAG, "onCancelled");
+			pleaseWaitDialog.dismiss();						
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (!isCancelled()){				
+				Log.d(DEBUG_TAG, "Download task complete");
+				if (result)
+					displayCurrentQuestion(startingQuestionNumber);
+				else
+					handleNoQuestions();
+				pleaseWaitDialog.dismiss();
 			}
-			eventType = questionBatch.next();
-		}	
+			else
+				Log.d(DEBUG_TAG, "onPostExecute, but cancelled");		
+		}
+
+		@Override
+		protected void onPreExecute() {
+			pleaseWaitDialog = ProgressDialog.show(QuizGameActivity.this,
+					"Trivia quiz", "Downloading question batch...", true, true);
+			pleaseWaitDialog.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					QuizTask.this.cancel(true);
+				}
+			});
+		}
+
+		@Override
+		protected Boolean doInBackground(Object... params) {
+			boolean bSuccess = false;
+			startingQuestionNumber = (Integer)params[1];
+			String pathToQuestions = params[0] +
+				"?max=" +
+				QUESTION_BATCH_SIZE +
+				"&start=" +
+				startingQuestionNumber;
+			try {
+				loadQuestionBatch(startingQuestionNumber,pathToQuestions);
+				bSuccess = true;
+			} catch (XmlPullParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return bSuccess;
+		}
+		
+		private void loadQuestionBatch(int startQuestionNumber, String questionsAddress) throws XmlPullParserException, IOException
+		{
+			mQuestions.clear();
+			
+			URL urlQuestions = new URL(questionsAddress);
+			
+			XmlPullParser questionBatch = XmlPullParserFactory.newInstance().newPullParser();
+			questionBatch.setInput(urlQuestions.openStream(), null);
+			
+			//parse the XML
+			int eventType = -1;
+			
+			while (eventType != XmlResourceParser.END_DOCUMENT){
+				if (eventType == XmlResourceParser.START_TAG){
+					//get the name of the tag
+					String tagName = questionBatch.getName();
+					
+					if (tagName.equals(XML_TAG_QUESTION))
+					{
+						String strQuestionNumber = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_NUMBER);
+						Integer questionNum = new Integer(strQuestionNumber);
+						String questionText = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_TEXT);
+						String questionImageUrl = questionBatch.getAttributeValue(null, XML_TAG_QUESTION_ATTRIBUTE_IMAGEURL);
+						
+						mQuestions.put(questionNum, new Question(questionNum, questionText, questionImageUrl));
+					}
+				}
+				eventType = questionBatch.next();
+			}	
+		}
 	}
 }

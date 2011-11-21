@@ -1,11 +1,18 @@
 package com.android.btdt;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
+import android.content.Context;
 import android.content.res.XmlResourceParser;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Window;
 import android.widget.TabHost;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -13,10 +20,16 @@ import android.widget.TabHost.TabSpec;
 import android.widget.TableLayout;
 
 public class QuizScoreActivity extends QuizActivity {
+	
+	int mProgressCounter = 0;
+	ScoreDownloaderTask allScoreDownloader;
+	ScoreDownloaderTask friendsScoreDownloader;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.scores);
         
         initializeTabs();
@@ -24,34 +37,30 @@ public class QuizScoreActivity extends QuizActivity {
         fillScoreTables();
     }
 
-	private void fillScoreTables() {
-		XmlResourceParser mockAllScores = getResources().getXml(R.xml.allscores);
-        XmlResourceParser mockFriendScores = getResources().getXml(R.xml.friendscores);
-        
-        TableLayout tableAllScores = (TableLayout) findViewById(R.id.TableLayout_AllScores);
-        try {
-        	initializeHeaderRow(tableAllScores);
-			fillScoreTable(mockAllScores, tableAllScores);
-		} catch (XmlPullParserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		TableLayout tableFriendsScores = (TableLayout) findViewById(R.id.TableLayout_FriendScores);
-		try {
-			initializeHeaderRow(tableFriendsScores);
-			fillScoreTable(mockFriendScores, tableFriendsScores);
-		} catch (XmlPullParserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	@Override
+	protected void onPause() {		
+		cancelTaskIfRunning(allScoreDownloader);
+		cancelTaskIfRunning(friendsScoreDownloader);
+		super.onPause();
 	}
+
+	private void cancelTaskIfRunning(AsyncTask<?, ?, ?> task) {
+		if (task != null && task.getStatus()!=AsyncTask.Status.FINISHED)
+			task.cancel(true);
+	}
+
+	private void fillScoreTables() {		
+        TableLayout tableAllScores = (TableLayout) findViewById(R.id.TableLayout_AllScores);
+        initializeHeaderRow(tableAllScores);        
+        allScoreDownloader = new ScoreDownloaderTask();
+        allScoreDownloader.execute(TRIVIA_SERVER_SCORES, tableAllScores);
+        
+		TableLayout tableFriendsScores = (TableLayout) findViewById(R.id.TableLayout_FriendScores);
+		initializeHeaderRow(tableFriendsScores);
+		friendsScoreDownloader = new ScoreDownloaderTask();
+		int playerId = 2008;
+		friendsScoreDownloader.execute(TRIVIA_SERVER_SCORES+"?playerId="+playerId, tableFriendsScores);
+		}
 	
     /**
      * Add a header {@code TableRow} to the {@code TableLayout} (styled)
@@ -70,48 +79,6 @@ public class QuizScoreActivity extends QuizActivity {
         scoreTable.addView(headerRow);
     }
     
-    private void fillScoreTable(XmlResourceParser scores, TableLayout table) throws XmlPullParserException, IOException{
-    	int eventType = -1;
-    	 boolean bFoundScores = false;
-        
-        while (eventType != XmlResourceParser.END_DOCUMENT) {
-        	if (eventType == XmlResourceParser.START_TAG) {
-        		String strName = scores.getName();
-        		if (strName.equals("score")){
-        			bFoundScores = true;
-        			String scoreValue = scores.getAttributeValue(null, "score");
-        			String scoreRank = scores.getAttributeValue(null, "rank");
-        			String scoreUserName = scores.getAttributeValue(null, "username");
-        			insertScoreRow(table, scoreValue, scoreRank, scoreUserName);
-        		}        		
-        	}
-        	eventType = scores.next();
-        }
-        
-        if (!bFoundScores){
-        	insertNoScoresRow(table);
-        }
-    }
-
-	private void insertNoScoresRow(TableLayout table) {
-		final TableRow newRow = new TableRow(this);
-		TextView noResults = new TextView(this);
-		noResults.setText(getResources().getString(R.string.no_scores));
-		newRow.addView(noResults);
-		table.addView(newRow);
-	}
-
-	private void insertScoreRow(TableLayout table, String scoreValue,
-			String scoreRank, String scoreUserName) {
-		final TableRow scoreRow = new TableRow(this);
-		int textColor = getResources().getColor(R.color.title_color);
-		float textSize = getResources().getDimension(R.dimen.help_text_size);
-		addTextToRowWithValues(scoreRow, scoreUserName, textColor, textSize);
-		addTextToRowWithValues(scoreRow, scoreValue, textColor, textSize);
-		addTextToRowWithValues(scoreRow, scoreRank, textColor, textSize);
-		table.addView(scoreRow);
-	}
-
 	private void addTextToRowWithValues(TableRow scoreRow,
 			String text, int textColor, float textSize) {
 		TextView textView = new TextView(this);
@@ -138,5 +105,107 @@ public class QuizScoreActivity extends QuizActivity {
         host.addTab(friendsScoresTab);
         
         host.setCurrentTabByTag("allTab");
+	}
+	
+	public class ScoreDownloaderTask extends AsyncTask<Object, String, Boolean>{
+		@Override
+		protected void onCancelled() {
+			mProgressCounter --;
+			if (mProgressCounter <= 0){
+				mProgressCounter = 0;
+				QuizScoreActivity.this.setProgressBarIndeterminateVisibility(false);
+			}
+		}
+		@Override
+		protected void onPostExecute(Boolean result) {
+			mProgressCounter --;
+			if (mProgressCounter <= 0){
+				mProgressCounter = 0;
+				QuizScoreActivity.this.setProgressBarIndeterminateVisibility(false);
+			}
+		}
+		@Override
+		protected void onPreExecute() {
+			mProgressCounter ++;
+			QuizScoreActivity.this.setProgressBarIndeterminateVisibility(true);
+		}
+		@Override
+		protected void onProgressUpdate(String... values) {
+			if (values.length == 3)
+				insertScoreRow(table, values[0], values[1], values[2]);
+			else
+				insertNoScoresRow(table);
+		}
+		private static final String DEBUG_TAG = "SocreDownloaderTask";
+		TableLayout table;
+		@Override
+		protected Boolean doInBackground(Object... params) {
+			boolean bSuccess = false;
+			String pathToScores = (String)params[0];
+			table = (TableLayout)params[1];
+			XmlPullParser scores = null;
+			URL xmlUrl;
+			try {
+				xmlUrl = new URL(pathToScores);
+				scores = XmlPullParserFactory.newInstance().newPullParser();
+				scores.setInput(xmlUrl.openStream(), null);
+				if (scores != null){					
+					fillScoreTable(scores);
+					bSuccess = true;
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (XmlPullParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return bSuccess;
+		}
+		
+		private void fillScoreTable(XmlPullParser scores) throws XmlPullParserException, IOException{
+	    	int eventType = -1;
+	    	 boolean bFoundScores = false;
+	        
+	        while (eventType != XmlResourceParser.END_DOCUMENT) {
+	        	if (eventType == XmlResourceParser.START_TAG) {
+	        		String strName = scores.getName();
+	        		if (strName.equals("score")){
+	        			bFoundScores = true;
+	        			String scoreValue = scores.getAttributeValue(null, "score");
+	        			String scoreRank = scores.getAttributeValue(null, "rank");
+	        			String scoreUserName = scores.getAttributeValue(null, "username");
+	        			publishProgress(scoreValue, scoreRank, scoreUserName);	        			
+	        		}        		
+	        	}
+	        	eventType = scores.next();
+	        }
+	        
+	        if (!bFoundScores){
+	        	publishProgress();
+	        }
+	    }
+
+		private void insertNoScoresRow(TableLayout table) {
+			final TableRow newRow = new TableRow(QuizScoreActivity.this);
+			TextView noResults = new TextView(QuizScoreActivity.this);
+			noResults.setText(getResources().getString(R.string.no_scores));
+			newRow.addView(noResults);
+			table.addView(newRow);
+		}
+
+		private void insertScoreRow(TableLayout table, String scoreValue,
+				String scoreRank, String scoreUserName) {
+			final TableRow scoreRow = new TableRow(QuizScoreActivity.this);
+			int textColor = getResources().getColor(R.color.title_color);
+			float textSize = getResources().getDimension(R.dimen.help_text_size);
+			addTextToRowWithValues(scoreRow, scoreUserName, textColor, textSize);
+			addTextToRowWithValues(scoreRow, scoreValue, textColor, textSize);
+			addTextToRowWithValues(scoreRow, scoreRank, textColor, textSize);
+			table.addView(scoreRow);
+		}
 	}
 }

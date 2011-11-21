@@ -24,4 +24,7 @@ public class QuizActivity extends Activity {
 	public static final String XML_TAG_QUESTION_ATTRIBUTE_TEXT = "text";
 	public static final String XML_TAG_QUESTION_ATTRIBUTE_IMAGEURL = "imageUrl";
 	public static final int QUESTION_BATCH_SIZE = 15;
+	public static final String TRIVIA_SERVER_BASE = "http://tqs.mamlambo.com/";
+	public static final String TRIVIA_SERVER_SCORES = TRIVIA_SERVER_BASE + "scores.jsp";
+	public static final String TRIVIA_SERVER_QUESTIONS = TRIVIA_SERVER_BASE + "questions.jsp";
 }
